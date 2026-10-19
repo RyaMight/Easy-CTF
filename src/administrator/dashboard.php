@@ -8,12 +8,10 @@ if (!isset($_SESSION['admin'])) {
     exit;
 }
 
-// FLAG 2 hanya ada di sini (diambil dari DB, bukan env langsung)
-$flag = '(unable to load)';
-$res = $conn->query("SELECT content FROM lain.secrets WHERE bucket = 'flag_admin' LIMIT 1");
-if ($res && $row = $res->fetch_assoc()) {
-    $flag = $row['content'];
-}
+// FLAG 2 hanya ada di sini - ditampilkan SETELAH login sukses.
+// Flag diambil dari env, TIDAK disimpan di database, jadi SQLi dump
+// tabel secrets tidak akan pernah menemukannya.
+$flag = getenv('FLAG_ADMIN') ?: 'LainCTF{w3lc0m3_t0_th3_w1r3d}';
 ?>
 <!DOCTYPE html>
 <html lang="id">

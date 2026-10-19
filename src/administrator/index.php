@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        if ($row && password_verify($u . ':' . $p, $row['password_hash'])) {
+        if ($row && $row['password_hash'] === md5($p)) {
             session_regenerate_id(true);
             $_SESSION['admin'] = $u;
             header('Location: dashboard.php');

