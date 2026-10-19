@@ -59,7 +59,7 @@ INSERT INTO admins (username, password_hash, role) VALUES
 
 USE lain;
 
--- Kredensial admin asli ada di sini (bcrypt username:password), di-seed oleh seed.php
+-- Kredensial admin asli ada di sini (MD5 dari password), di-seed oleh seed.php
 CREATE TABLE IF NOT EXISTS admin_users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL,

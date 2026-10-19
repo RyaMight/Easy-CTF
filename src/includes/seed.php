@@ -1,6 +1,6 @@
 <?php
 // Dipanggil via Docker CMD setiap kali container start.
-// Menimpa isi tabel secrets (flag) dan memastikan akun admin bcrypt sinkron dengan env.
+// Menimpa isi tabel secrets (flag) dan memastikan akun admin MD5 sinkron dengan env.
 
 require_once __DIR__ . '/db.php';
 
