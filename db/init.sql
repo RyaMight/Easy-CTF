@@ -42,22 +42,7 @@ INSERT INTO knights_messages (alias, message) VALUES
 ('cyberia_lore', 'The Wired remembers everything.'),
 ('phantom', 'Present day. Present time. Ha ha ha...');
 
--- Database "admin": TIDAK ada kredensial asli, hanya tabel jebakan
-CREATE DATABASE IF NOT EXISTS admin CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE admin;
 
-CREATE TABLE IF NOT EXISTS admins (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50) NOT NULL,
-  password_hash CHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT 'admin'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT INTO admins (username, password_hash, role) VALUES
-('Lain', '$2y$10$Q8Z0m5YcH0jChS09dPScR.lXWLaSxhWigvDFcgX2mn1/h9DcRm/yC', 'admin'),
-('eiri', '$2y$10$deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbe', 'superadmin');
-
-USE lain;
 
 -- Kredensial admin asli ada di sini (MD5 dari password), di-seed oleh seed.php
 CREATE TABLE IF NOT EXISTS admin_users (
@@ -68,5 +53,4 @@ CREATE TABLE IF NOT EXISTS admin_users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 GRANT ALL PRIVILEGES ON lain.* TO 'lain'@'%';
-GRANT ALL PRIVILEGES ON admin.* TO 'lain'@'%';
 FLUSH PRIVILEGES;

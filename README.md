@@ -26,7 +26,6 @@ Akses: `http://<server-ip>:8001`
 
 Database:
 - `lain` → `episodes` (target query), `secrets` (**flag 1 di sini**; flag admin sengaja TIDAK disimpan di DB), `admin_users` (**kredensial admin asli, MD5**), `knights_messages` (decoy)
-- `admin` → `admins` (kredensial palsu/decoy)
 
 ## URL
 
@@ -44,7 +43,7 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 2. **Tanpa WAF** — tidak ada filter keyword/spasi. Payload apa pun lolos.
 3. **Rate limit nyaris hilang** — limit di-set sangat tinggi (100.000 req/menit untuk SQLi, 1.000 percobaan login), jadi praktis tidak terasa. sqlmap jalan full speed tanpa `--delay`.
 4. **Flag** — semua flag tetap di dalam database.
-5. **Decoy tetap ada** — database `admin` berisi tabel `admins` palsu; tabel `knights_messages` berisi pesan pengecoh (bonus edukasi, tidak menghalangi).
+5. **Decoy tetap ada** — tabel `knights_messages` berisi pesan pengecoh (bonus edukasi, tidak menghalangi).
 6. **Password admin crackable** — hash MD5 dibuat dari password wordlist-friendly (`cyberia2026`); peserta bisa hashcat -m 0 / john, atau paste ke crackstation.net — laptop biasa sanggup.
 
 ## 2 Flag + 1 Decoy

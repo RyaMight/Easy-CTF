@@ -16,6 +16,8 @@ $conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('flag_sqli', '"
 // FLAG 2 TIDAK disimpan di database - hanya muncul di dashboard admin
 // setelah login (diambil dari env langsung). Dump tabel secrets via SQLi
 // tidak akan pernah mendapatkan flag ini.
+// Hapus sisa flag_admin lama bila ada (dari init.sql versi sebelumnya).
+$conn->query("DELETE FROM lain.secrets WHERE bucket='flag_admin'");
 
 // Decoy
 $conn->query("DELETE FROM lain.secrets WHERE bucket='decoy'");
