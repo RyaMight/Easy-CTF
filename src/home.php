@@ -3,7 +3,7 @@ require_once __DIR__ . '/includes/db.php';
 
 $FLAG_HTML = getenv('FLAG_HTML') ?: 'LainCTF{fl4g_1n_pl41n_s1ght}';
 
-$result = $conn->query("SELECT id, title FROM episodes ORDER BY id ASC");
+$result = $conn->query("SELECT id, title FROM lain_content.episodes ORDER BY id ASC");
 $episodes = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>

@@ -25,7 +25,8 @@ Akses: `http://<server-ip>:8001`
 | `db` | mysql:5.7 | Port TIDAK dipublish ke host (sqlmap harus lewat web) |
 
 Database:
-- `lain` → `episodes` (target query), `secrets` (**flag 1 di sini**; flag admin sengaja TIDAK disimpan di DB), `admin_users` (**kredensial admin asli, MD5**), `knights_messages` (decoy)
+- `lain` → `secrets` (**flag 1 di sini**; flag admin sengaja TIDAK disimpan di DB), `admin_users` (**kredensial admin asli, MD5**), `knights_messages` (decoy)
+- `lain_content` → `episodes` (target query SQLi; dipisah agar dump `lain` tetap ringan)
 
 ## URL
 

@@ -1,6 +1,11 @@
--- Database "lain": episodes + secrets + tabel decoy
+-- Database "lain": hanya tabel kecil (cepat di-dump sqlmap)
 CREATE DATABASE IF NOT EXISTS lain CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE lain;
+
+-- Konten episode dipisah ke database lain supaya dump database "lain"
+-- tidak berat (13 baris deskripsi panjang bikin sqlmap lambat).
+CREATE DATABASE IF NOT EXISTS lain_content CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE lain_content;
 
 CREATE TABLE IF NOT EXISTS episodes (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -24,6 +29,8 @@ INSERT INTO episodes (title, description) VALUES
 ('EGO', 'Di dalam Wired, Lain berhadapan dengan Masami Eiri yang mengaku sebagai dewa. Lain menyadari bahwa ia sendirilah yang sesungguhnya omnipresent, lalu menghapus Eiri. Pada akhirnya Lain memilih menjadi semua dan tidak menjadi siapa-siapa, mengamati dunia dari mana-mana, termasuk dari sisi Alice yang ia cintai.');
 
 -- Flag disimpan di sini (di-seed ulang oleh seed.php setiap container start)
+USE lain;
+
 CREATE TABLE IF NOT EXISTS secrets (
   id INT AUTO_INCREMENT PRIMARY KEY,
   bucket VARCHAR(50) NOT NULL,
@@ -53,4 +60,5 @@ CREATE TABLE IF NOT EXISTS admin_users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 GRANT ALL PRIVILEGES ON lain.* TO 'lain'@'%';
+GRANT ALL PRIVILEGES ON lain_content.* TO 'lain'@'%';
 FLUSH PRIVILEGES;

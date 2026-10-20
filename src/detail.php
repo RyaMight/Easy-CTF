@@ -7,7 +7,7 @@ $id = $_GET['id'] ?? '1';
 // --- Easy: tanpa WAF, tanpa rate limit. Error MySQL ditampilkan agar
 // sqlmap bisa langsung pakai teknik error-based/union tanpa tamper.
 
-$sql = "SELECT id, title, description FROM episodes WHERE id = " . $id;
+$sql = "SELECT id, title, description FROM lain_content.episodes WHERE id = " . $id;
 
 // Error DITAMPILKAN (easy) - sqlmap error-based jalan langsung
 $errorPage = '<h1>Not Found</h1><p>Episode tidak ditemukan.</p><a class="btn" href="home.php">Back to Home</a>';

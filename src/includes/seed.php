@@ -13,6 +13,8 @@ $ADMIN_PASSWORD = getenv('ADMIN_PASSWORD') ?: 'Tr1gger_Sh1nji_1998';
 $conn->query("DELETE FROM lain.secrets WHERE bucket='flag_sqli'");
 $conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('flag_sqli', '" . $conn->real_escape_string($FLAG_SQLI) . "')");
 
+// Konten episode di database terpisah agar dump database "lain" tetap ringan
+
 // FLAG 2 TIDAK disimpan di database - hanya muncul di dashboard admin
 // setelah login (diambil dari env langsung). Dump tabel secrets via SQLi
 // tidak akan pernah mendapatkan flag ini.
