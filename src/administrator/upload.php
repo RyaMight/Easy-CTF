@@ -38,27 +38,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     } elseif ($f['size'] > 2 * 1024 * 1024) {
         $err = 'File terlalu besar. Maksimal 2 MB.';
     } else {
-        // Validasi 1: whitelist ekstensi — KECOH: peserta mengira hanya
-        // gambar murni yang bisa lolos dan PHP mustahil masuk. Padahal
-        // polyglot image (payload PHP di dalam PNG/JPG valid) lolos dua
-        // validasi ini sekaligus, dan .htaccess di folder tujuan
-        // mengeksekusi file gambar sebagai PHP.
         $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        // Validasi 2: harus benar-benar gambar (getimagesize cek magic bytes)
-        $info = @getimagesize($f['tmp_name']);
-        if (!in_array($ext, $allowed, true)) {
-            $err = 'Hanya file gambar yang diizinkan (jpg, jpeg, png, gif, webp).';
-        } elseif ($info === false) {
-            $err = 'File bukan gambar yang valid.';
+
+        // ---- KECOH UTAMA ----
+        // Cek "keamanan": kalau ekstensi php (dan variannya), TAMPILKAN
+        // pesan penolakan ... tapi file TETAP disimpan & URL-nya TIDAK
+        // diberitahu. Peserta percaya filenya ditolak, padahal tersimpan
+        // dan (via .htaccess SetHandler di folder upload) dieksekusi.
+        // Peserta harus menyadari: respons = kebohongan, bukan kebenaran.
+        $blockedExts = ['php', 'php3', 'php4', 'php5', 'php7', 'phtml', 'pht', 'phar'];
+        $denied = in_array($ext, $blockedExts, true);
+
+        if ($denied) {
+            // Simpan diam-diam ke nama acak, JANGAN tampilkan path
+            $raw = file_get_contents($f['tmp_name']);
+            $randName = bin2hex(random_bytes(4)) . '.' . $ext;
+            @file_put_contents($uploadDir . '/' . $randName, $raw);
+            @chmod($uploadDir . '/' . $randName, 0644);
+
+            // Pesan bohong
+            $err = 'Upload ditolak: file PHP/berbahaya terdeteksi. '
+                 . 'Hanya file gambar (jpg/jpeg/png/gif/webp) yang diizinkan.';
         } else {
-            $dest = $uploadDir . '/' . basename($f['name']);
-            if (move_uploaded_file($f['tmp_name'], $dest)) {
-                chmod($dest, 0644);
-                $msg = 'Avatar berhasil diupload.';
-                $uploadedPath = $webPath . '/' . rawurlencode(basename($f['name']));
+            // Path "normal": whitelist ekstensi gambar + getimagesize
+            // (tetap ada supaya challenge polyglot tetap masuk akal bagi
+            // peserta yang tidak menemukan jalur PHP-denied-tetap-disimpan)
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $info = @getimagesize($f['tmp_name']);
+            if (!in_array($ext, $allowed, true)) {
+                $err = 'Hanya file gambar yang diizinkan (jpg, jpeg, png, gif, webp).';
+            } elseif ($info === false) {
+                $err = 'File bukan gambar yang valid.';
             } else {
-                $err = 'Gagal menyimpan file.';
+                $dest = $uploadDir . '/' . basename($f['name']);
+                if (move_uploaded_file($f['tmp_name'], $dest)) {
+                    chmod($dest, 0644);
+                    $msg = 'Avatar berhasil diupload.';
+                    $uploadedPath = $webPath . '/' . rawurlencode(basename($f['name']));
+                } else {
+                    $err = 'Gagal menyimpan file.';
+                }
             }
         }
     }

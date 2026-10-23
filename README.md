@@ -53,7 +53,7 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 |---|---|---|---|
 | 1 | `FLAG_SQLI` | `lain.secrets` bucket `flag_sqli` | Error-based/UNION SQLi dump via sqlmap (tanpa tamper) |
 | 2 | `FLAG_ADMIN` | **TIDAK di database** — hanya muncul di dashboard `/administrator/dashboard.php` setelah login | Dump `lain.admin_users` → dapat `username:password` → login → flag ditampilkan dari env |
-| 3 | `FLAG_UPLOAD` | **File config di filesystem container** — dikubur di `/srv/.config/tachibana/.internal/navi/lain/.wired/netui.cnf` (folder berlapis-lapis tanpa kata "flag", di luar docroot), diselingi 4 file decoy `flag.txt` di lokasi lain | Upload avatar di `/administrator/upload.php` tampaknya hanya menerima gambar (ekstensi + `getimagesize()`) — peserta mengira PHP mustahil masuk. Bypass: polyglot image (payload PHP di dalam PNG/JPG valid) lolos kedua validasi → dieksekusi via `.htaccess` `SetHandler` → webshell → telusuri filesystem, bedakan flag asli dari decoy |
+| 3 | `FLAG_UPLOAD` | **File `flag.txt` di filesystem container** — dikubur di `/var/lain_backup/.notes/flag.txt` (2 level, di luar docroot), plus 1 decoy di `/var/backups/flag.txt` | Upload di `/administrator/upload.php`: pesan bilang file PHP **ditolak**, padahal file tetap disimpan (nama di-random, path tidak diberitahu) dan dieksekusi via `.htaccess` `SetHandler`. Peserta harus sadar respons adalah kebohongan → fuzz/listing folder upload atau cek perilaku → webshell → `find / -name flag.txt` → bedakan flag asli dari decoy |
 | - | `FLAG_DECOY` | `lain.secrets` bucket `decoy` | Jebakan — bukan flag yang benar untuk submit |
 
 ### Detail challenge upload (spoiler organizer)
@@ -61,27 +61,35 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 - Folder upload **dikubur dalam sarang folder berlapis** di bawah `images/`:
   `/images/.cache/assets/gen/thumbs/.store/lain/avatar/` — menyamar sebagai
   struktur cache/asset internal dengan beberapa folder diawali titik.
-  Dirsearch tidak akan menebak path sedalam ini; peserta menemukannya dari
-  URL preview di response upload.
-- Validasi: whitelist ekstensi (`jpg/jpeg/png/gif/webp`) + `getimagesize()`
-  (magic bytes) — polyglot image lolos keduanya.
+- **Kecoh utama**: kalau peserta upload file `.php` (atau variannya), halaman
+  menampilkan *"Upload ditolak: file PHP/berbahaya terdeteksi"* — padahal
+  file **tetap disimpan** ke folder upload dengan nama acak
+  (`<random4>.php`) dan URL-nya sengaja tidak ditampilkan. Peserta harus
+  sadar bahwa respons aplikasi bohong, lalu menemukan nama file (listing
+  folder upload via path yang diketahui, atau menebak pola random hex 8).
+- Jalur alternatif tetap terbuka: upload polyglot image (payload PHP di
+  dalam PNG/JPG valid) → lolos whitelist ekstensi + `getimagesize()` →
+  path preview ditampilkan apa adanya.
 - `.htaccess` di folder terakhir berisi `SetHandler application/x-httpd-php`
   via `FilesMatch` (php:8.2-apache memasang mod_php via SetHandler, jadi
-  `AddType` saja tidak cukup) — file `.png` berisi PHP dieksekusi.
+  `AddType` saja tidak cukup) — file `.png` maupun `.php` dieksekusi.
+- **Flag**: `/var/lain_backup/.notes/flag.txt` (asli) + decoy di
+  `/var/backups/flag.txt` — `find / -name flag.txt` menemukan dua-duanya,
+  peserta harus membaca isinya dan memilih yang benar.
 
 ```bash
-# 1. Buat polyglot PNG + payload PHP
-exiftool -Comment='<?php system($_GET["c"]); ?>' lain.png -o avatar.png
-#    atau: cat lain.png >> payload.png (append setelah IEND)
-
-# 2. Login admin -> /administrator/upload.php -> upload avatar.png (lolos validasi)
-# 3. Buka URL dari response:
-#    /images/.cache/assets/gen/thumbs/.store/lain/avatar/avatar.png?c=env
-#    -> webshell jalan. Flag BUKAN di env: flag.txt dikubur di
-#    /srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt
-#    Contoh pencarian: ?c=find / -name flag.txt 2>/dev/null
-#    lalu: ?c=cat /srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt
-#    -> FLAG_UPLOAD muncul
+# Cara A (kecoh utama): upload shell.php langsung
+#    -> pesan "ditolak", tapi file tersimpan sebagai <random>.php
+#    -> temukan namanya (mis. via listing folder upload dari shell polyglot
+#       atau bruteforce 8-hex), lalu akses langsung -> dieksekusi PHP
+#
+# Cara B (polyglot): 
+exiftool -Comment='<?PHP system($_GET["c"]); ?>' lain.png -o avatar.png
+#    atau: cat ep1.jpg shell.php > avatar.png
+# Upload lewat Change Avatar -> URL preview ditampilkan ->
+# avatar.png?c=find / -name flag.txt 2>/dev/null
+#    -> dua kandidat: /var/lain_backup/.notes/flag.txt (ASLI)
+#                     /var/backups/flag.txt           (decoy)
 ```
 
 ## Walkthrough (ORGANIZER ONLY — spoiler)
