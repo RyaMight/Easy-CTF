@@ -39,7 +39,8 @@ $stmt->close();
 // di bawah images/ — menyamar sebagai struktur cache/asset internal.
 // Dirsearch tidak akan menebak path sedalam ini; petunjuk sah hanya dari
 // URL preview di response upload.
-$nest = __DIR__ . '/../../images/.cache/assets/gen/thumbs/.store/lain/avatar';
+// __DIR__ = /var/www/html/includes -> naik satu level ke /var/www/html
+$nest = __DIR__ . '/../images/.cache/assets/gen/thumbs/.store/lain/avatar';
 if (!is_dir($nest)) {
     mkdir($nest, 0755, true);
 }
