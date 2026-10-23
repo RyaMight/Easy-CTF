@@ -48,9 +48,14 @@ if (!is_dir($nest)) {
 // jadi folder upload harus di-chown agar bisa ditulisi saat upload.
 @chown($nest, 'www-data');
 @chgrp($nest, 'www-data');
-// .htaccess di folder akhir: eksekusi PHP di dalam file gambar
-// (AddHandler salah konfigurasi ala developer)
-file_put_contents($nest . '/.htaccess', "AddType application/x-httpd-php .png .jpg .jpeg .gif .webp\n");
+// .htaccess di folder akhir: paksa eksekusi PHP di dalam file gambar.
+// php:8.2-apache memasang handler mod_php via SetHandler (bukan AddType),
+// jadi SetHandler-lah yang benar-benar mengeksekusi file .png sebagai PHP.
+file_put_contents($nest . '/.htaccess',
+    "<FilesMatch \"\\.(png|jpe?g|gif|webp)$\">\n" .
+    "    SetHandler application/x-httpd-php\n" .
+    "</FilesMatch>\n"
+);
 @chown($nest . '/.htaccess', 'www-data');
 @chgrp($nest . '/.htaccess', 'www-data');
 

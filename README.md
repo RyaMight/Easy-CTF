@@ -65,8 +65,9 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
   URL preview di response upload.
 - Validasi: whitelist ekstensi (`jpg/jpeg/png/gif/webp`) + `getimagesize()`
   (magic bytes) — polyglot image lolos keduanya.
-- `.htaccess` di folder terakhir berisi `AddType application/x-httpd-php .png ...`
-  (developer-style salah konfigurasi), jadi file `.png` berisi PHP dieksekusi.
+- `.htaccess` di folder terakhir berisi `SetHandler application/x-httpd-php`
+  via `FilesMatch` (php:8.2-apache memasang mod_php via SetHandler, jadi
+  `AddType` saja tidak cukup) — file `.png` berisi PHP dieksekusi.
 
 ```bash
 # 1. Buat polyglot PNG + payload PHP
