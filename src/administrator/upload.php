@@ -13,6 +13,20 @@ if (!isset($_SESSION['admin'])) {
 $uploadDir = __DIR__ . '/../images/.cache/assets/gen/thumbs/.store/lain/avatar';
 $webPath = '../images/.cache/assets/gen/thumbs/.store/lain/avatar';
 
+// Auto-wipe: hapus semua file upload yang berumur > 10 menit.
+// Dijalankan setiap kali halaman upload dibuka, jadi shell/avatar yang
+// ditinggalkan tidak bertahan lama dan peserta harus upload ulang.
+$TTL = 600; // detik
+foreach (glob($uploadDir . '/*') ?: [] as $old) {
+    $name = basename($old);
+    if ($name === '.htaccess') {
+        continue; // handler PHP jangan sampai terhapus
+    }
+    if (is_file($old) && (time() - filemtime($old)) > $TTL) {
+        @unlink($old);
+    }
+}
+
 $msg = '';
 $err = '';
 $uploadedPath = '';
@@ -24,7 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     } elseif ($f['size'] > 2 * 1024 * 1024) {
         $err = 'File terlalu besar. Maksimal 2 MB.';
     } else {
-        // Validasi 1: whitelist ekstensi
+        // Validasi 1: whitelist ekstensi — KECOH: peserta mengira hanya
+        // gambar murni yang bisa lolos dan PHP mustahil masuk. Padahal
+        // polyglot image (payload PHP di dalam PNG/JPG valid) lolos dua
+        // validasi ini sekaligus, dan .htaccess di folder tujuan
+        // mengeksekusi file gambar sebagai PHP.
         $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         // Validasi 2: harus benar-benar gambar (getimagesize cek magic bytes)
@@ -56,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
 <body>
 <div class="container">
     <h1>Change Avatar</h1>
-    <p>Upload foto profil Anda. Hanya gambar (jpg/png/gif/webp) yang diperbolehkan.</p>
+    <p>Upload foto profil Anda. Hanya file gambar (jpg/png/gif/webp) yang diperbolehkan</p>
     <?php if ($err): ?><p style="color:#dc3545"><?= htmlspecialchars($err) ?></p><?php endif; ?>
     <?php if ($msg): ?>
         <p style="color:#28a745"><?= htmlspecialchars($msg) ?></p>

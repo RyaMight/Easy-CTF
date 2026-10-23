@@ -53,7 +53,7 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 |---|---|---|---|
 | 1 | `FLAG_SQLI` | `lain.secrets` bucket `flag_sqli` | Error-based/UNION SQLi dump via sqlmap (tanpa tamper) |
 | 2 | `FLAG_ADMIN` | **TIDAK di database** — hanya muncul di dashboard `/administrator/dashboard.php` setelah login | Dump `lain.admin_users` → dapat `username:password` → login → flag ditampilkan dari env |
-| 3 | `FLAG_UPLOAD` | **File `flag.txt` di filesystem container** — dikubur di `/srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt` (folder berlapis-lapis, di luar docroot) | Upload avatar di `/administrator/upload.php` hanya menerima gambar (ekstensi + `getimagesize()`). Bypass: polyglot PNG + payload PHP (mis. via exiftool/append setelah IEND) → dieksekusi karena `.htaccess` `AddType application/x-httpd-php .png` di folder upload → webshell → cari & baca `flag.txt` |
+| 3 | `FLAG_UPLOAD` | **File config di filesystem container** — dikubur di `/srv/.config/tachibana/.internal/navi/lain/.wired/netui.cnf` (folder berlapis-lapis tanpa kata "flag", di luar docroot), diselingi 4 file decoy `flag.txt` di lokasi lain | Upload avatar di `/administrator/upload.php` tampaknya hanya menerima gambar (ekstensi + `getimagesize()`) — peserta mengira PHP mustahil masuk. Bypass: polyglot image (payload PHP di dalam PNG/JPG valid) lolos kedua validasi → dieksekusi via `.htaccess` `SetHandler` → webshell → telusuri filesystem, bedakan flag asli dari decoy |
 | - | `FLAG_DECOY` | `lain.secrets` bucket `decoy` | Jebakan — bukan flag yang benar untuk submit |
 
 ### Detail challenge upload (spoiler organizer)

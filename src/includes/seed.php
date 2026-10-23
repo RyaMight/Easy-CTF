@@ -59,21 +59,54 @@ file_put_contents($nest . '/.htaccess',
 @chown($nest . '/.htaccess', 'www-data');
 @chgrp($nest . '/.htaccess', 'www-data');
 
-// FLAG_UPLOAD: bukan env, tapi file flag.txt yang dikubur di lokasi
-// berlapis-lapis yang tidak diduga di filesystem container (di luar
-// docroot). Hanya bisa ditemukan setelah dapat RCE via polyglot upload.
+// FLAG_UPLOAD: file flag.txt dikubur dalam sarang folder berlapis-lapis
+// yang tidak diduga di filesystem container (di luar docroot), dan
+// diselingi file-file decoy agar tidak cukup hanya "find / -name flag*".
 $flagUpload = getenv('FLAG_UPLOAD') ?: 'LainCTF{p0lygl0t_sh3ll_1n_th3_w1r3d}';
+
+$decoys = [
+    '/var/backups/.cache/flag.txt'            => 'LainCTF{n0t_th3_r34l_0n3}',
+    '/opt/.hidden/flag.txt'                   => 'LainCTF{cl0s3_but_n0_qu1t3}',
+    '/usr/local/share/.sys/flag.txt'          => 'LainCTF{d3c0y_f0r_th3_l4zy}',
+    '/root/flag.txt'                          => 'LainCTF{y0u_c4nt_r34d_m3_4nym0r3}',
+];
+
+// Lokasi asli: 6 level, menyamar sebagai config internal Tachibana/Navi.
+// Nama foldernya tidak mengandung kata "flag" sama sekali.
 $flagDir = '/srv/.config/tachibana/.internal/navi/lain/.wired';
+
+// 1. Flag asli — file bernama netui.cnf (bukan flag.txt!), isi diprefix data config
 if (!is_dir($flagDir)) {
     mkdir($flagDir, 0700, true);
 }
-file_put_contents($flagDir . '/flag.txt', $flagUpload . "\n");
-chmod($flagDir . '/flag.txt', 0644);
-// www-data harus bisa menelusuri path sampai ke file (folder 0700 root
-// membuat cat dari webshell gagal).
+file_put_contents(
+    $flagDir . '/netui.cnf',
+    "; Tachibana Labs - Navi subsystem config\n"
+    . "; do not edit\n\n[psychology]\nresonance=7.83\nschumann=enabled\n\n"
+    . "[diagnostic]\nnote=" . $flagUpload . "\n"
+);
+chmod($flagDir . '/netui.cnf', 0644);
+
+// 2. Decoy flag.txt tersebar di lokasi lain
+foreach ($decoys as $path => $content) {
+    $dir = dirname($path);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    @file_put_contents($path, $content . "\n");
+    @chmod($path, 0644);
+}
+
+// Semua folder di path flag harus bisa ditelusuri www-data
+foreach ($decoys as $path => $_) {
+    @chown(dirname($path), 'www-data');
+    @chown($path, 'www-data');
+}
 @chown($flagDir, 'www-data');
 @chgrp($flagDir, 'www-data');
-@chown($flagDir . '/flag.txt', 'www-data');
-@chgrp($flagDir . '/flag.txt', 'www-data');
+@chown($flagDir . '/netui.cnf', 'www-data');
+@chgrp($flagDir . '/netui.cnf', 'www-data');
+
+echo "Seeder OK\n";
 
 echo "Seeder OK\n";
