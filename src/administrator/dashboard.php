@@ -24,6 +24,7 @@ $flag = getenv('FLAG_ADMIN') ?: 'LainCTF{w3lc0m3_t0_th3_w1r3d}';
 <div class="container">
     <h1>Welcome, <?= htmlspecialchars($_SESSION['admin']) ?></h1>
     <p>You have admin access.</p>
+    <p><a class="btn" href="upload.php">Change Avatar</a></p>
     <div class="flag">[FLAG] <?= htmlspecialchars($flag) ?></div>
     <p class="back"><a href="../home.php">&laquo; Back to list</a> | <a href="logout.php">Logout</a></p>
 </div>

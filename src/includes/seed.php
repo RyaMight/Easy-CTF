@@ -9,9 +9,11 @@ $FLAG_DECOY = getenv('FLAG_DECOY') ?: 'LainCTF{d3c0y_tr4p_th1s_1s_n0t_th3_fl4g}'
 $ADMIN_USERNAME = getenv('ADMIN_USERNAME') ?: 'lain_chrono';
 $ADMIN_PASSWORD = getenv('ADMIN_PASSWORD') ?: 'Tr1gger_Sh1nji_1998';
 
-// FLAG 1 - hidden di kolom file_priv profil (butuh UNION kolom ke-4)
-$conn->query("DELETE FROM lain.secrets WHERE bucket='flag_sqli'");
-$conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('flag_sqli', '" . $conn->real_escape_string($FLAG_SQLI) . "')");
+// FLAG 1 - bucket disamarkan jadi "notes" agar tidak langsung kelihatan;
+// peserta harus membaca isi tiap baris, bukan hanya nama bucket-nya.
+$conn->query("DELETE FROM lain.secrets");
+$conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('notes', '" . $conn->real_escape_string($FLAG_SQLI) . "')");
+$conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('notes', '" . $conn->real_escape_string($FLAG_DECOY) . "')");
 
 // Konten episode di database terpisah agar dump database "lain" tetap ringan
 
@@ -21,9 +23,7 @@ $conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('flag_sqli', '"
 // Hapus sisa flag_admin lama bila ada (dari init.sql versi sebelumnya).
 $conn->query("DELETE FROM lain.secrets WHERE bucket='flag_admin'");
 
-// Decoy
-$conn->query("DELETE FROM lain.secrets WHERE bucket='decoy'");
-$conn->query("INSERT INTO lain.secrets (bucket, content) VALUES ('decoy', '" . $conn->real_escape_string($FLAG_DECOY) . "')");
+// Decoy - sudah dimasukkan bersama flag di atas, bucket sama-sama "notes"
 
 // Admin: MD5 sinkron setiap start.
 // Easy: hash = md5(password), crackable di hashcat -m 0 / john / crackstation
@@ -34,5 +34,28 @@ $stmt = $conn->prepare("INSERT INTO lain.admin_users (username, password_hash, r
 $stmt->bind_param('ss', $ADMIN_USERNAME, $hash);
 $stmt->execute();
 $stmt->close();
+
+// Folder upload avatar: sengaja dikubur di dalam sarang folder berlapis
+// di bawah images/ — menyamar sebagai struktur cache/asset internal.
+// Dirsearch tidak akan menebak path sedalam ini; petunjuk sah hanya dari
+// URL preview di response upload.
+$nest = __DIR__ . '/../../images/.cache/assets/gen/thumbs/.store/lain/avatar';
+if (!is_dir($nest)) {
+    mkdir($nest, 0755, true);
+}
+// .htaccess di folder akhir: eksekusi PHP di dalam file gambar
+// (AddHandler salah konfigurasi ala developer)
+file_put_contents($nest . '/.htaccess', "AddType application/x-httpd-php .png .jpg .jpeg .gif .webp\n");
+
+// FLAG_UPLOAD: bukan env, tapi file flag.txt yang dikubur di lokasi
+// berlapis-lapis yang tidak diduga di filesystem container (di luar
+// docroot). Hanya bisa ditemukan setelah dapat RCE via polyglot upload.
+$flagUpload = getenv('FLAG_UPLOAD') ?: 'LainCTF{p0lygl0t_sh3ll_1n_th3_w1r3d}';
+$flagDir = '/srv/.config/tachibana/.internal/navi/lain/.wired';
+if (!is_dir($flagDir)) {
+    mkdir($flagDir, 0700, true);
+}
+file_put_contents($flagDir . '/flag.txt', $flagUpload . "\n");
+chmod($flagDir . '/flag.txt', 0600);
 
 echo "Seeder OK\n";

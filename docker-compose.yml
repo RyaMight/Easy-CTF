@@ -43,6 +43,7 @@ services:
       FLAG_ADMIN: "LainCTF{w3lc0m3_t0_th3_w1r3d}"
       FLAG_DECOY: "LainCTF{d3c0y_tr4p_th1s_1s_n0t_th3_fl4g}"
       FLAG_HTML: "LainCTF{fl4g_1n_pl41n_s1ght}"
+      FLAG_UPLOAD: "LainCTF{p0lygl0t_sh3ll_1n_th3_w1r3d}"
       ADMIN_USERNAME: "lain_chrono"
       ADMIN_PASSWORD: "cyberia"
     depends_on:
