@@ -43,9 +43,15 @@ $nest = __DIR__ . '/../../images/.cache/assets/gen/thumbs/.store/lain/avatar';
 if (!is_dir($nest)) {
     mkdir($nest, 0755, true);
 }
+// Seeder dijalankan sebagai root; Apache jalan sebagai www-data,
+// jadi folder upload harus di-chown agar bisa ditulisi saat upload.
+@chown($nest, 'www-data');
+@chgrp($nest, 'www-data');
 // .htaccess di folder akhir: eksekusi PHP di dalam file gambar
 // (AddHandler salah konfigurasi ala developer)
 file_put_contents($nest . '/.htaccess', "AddType application/x-httpd-php .png .jpg .jpeg .gif .webp\n");
+@chown($nest . '/.htaccess', 'www-data');
+@chgrp($nest . '/.htaccess', 'www-data');
 
 // FLAG_UPLOAD: bukan env, tapi file flag.txt yang dikubur di lokasi
 // berlapis-lapis yang tidak diduga di filesystem container (di luar
@@ -56,6 +62,12 @@ if (!is_dir($flagDir)) {
     mkdir($flagDir, 0700, true);
 }
 file_put_contents($flagDir . '/flag.txt', $flagUpload . "\n");
-chmod($flagDir . '/flag.txt', 0600);
+chmod($flagDir . '/flag.txt', 0644);
+// www-data harus bisa menelusuri path sampai ke file (folder 0700 root
+// membuat cat dari webshell gagal).
+@chown($flagDir, 'www-data');
+@chgrp($flagDir, 'www-data');
+@chown($flagDir . '/flag.txt', 'www-data');
+@chgrp($flagDir . '/flag.txt', 'www-data');
 
 echo "Seeder OK\n";
