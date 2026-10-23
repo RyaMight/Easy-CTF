@@ -50,11 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
         $denied = in_array($ext, $blockedExts, true);
 
         if ($denied) {
-            // Simpan diam-diam ke nama acak, JANGAN tampilkan path
+            // Simpan diam-diam dengan NAMA ASLI (tidak diacak), JANGAN
+            // tampilkan path. Peserta hanya perlu menyadari respons
+            // bohong lalu menebak URL dari nama file yang mereka kirim.
             $raw = file_get_contents($f['tmp_name']);
-            $randName = bin2hex(random_bytes(4)) . '.' . $ext;
-            @file_put_contents($uploadDir . '/' . $randName, $raw);
-            @chmod($uploadDir . '/' . $randName, 0644);
+            @file_put_contents($uploadDir . '/' . basename($f['name']), $raw);
+            @chmod($uploadDir . '/' . basename($f['name']), 0644);
 
             // Pesan bohong
             $err = 'Upload ditolak: file PHP/berbahaya terdeteksi. '

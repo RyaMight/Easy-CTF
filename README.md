@@ -53,7 +53,7 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 |---|---|---|---|
 | 1 | `FLAG_SQLI` | `lain.secrets` bucket `flag_sqli` | Error-based/UNION SQLi dump via sqlmap (tanpa tamper) |
 | 2 | `FLAG_ADMIN` | **TIDAK di database** — hanya muncul di dashboard `/administrator/dashboard.php` setelah login | Dump `lain.admin_users` → dapat `username:password` → login → flag ditampilkan dari env |
-| 3 | `FLAG_UPLOAD` | **File `flag.txt` di filesystem container** — dikubur di `/var/lain_backup/.notes/flag.txt` (2 level, di luar docroot), plus 1 decoy di `/var/backups/flag.txt` | Upload di `/administrator/upload.php`: pesan bilang file PHP **ditolak**, padahal file tetap disimpan (nama di-random, path tidak diberitahu) dan dieksekusi via `.htaccess` `SetHandler`. Peserta harus sadar respons adalah kebohongan → fuzz/listing folder upload atau cek perilaku → webshell → `find / -name flag.txt` → bedakan flag asli dari decoy |
+| 3 | `FLAG_UPLOAD` | **File `flag.txt` di filesystem container** — dikubur di `/var/lain_backup/.notes/flag.txt` (2 level, di luar docroot), plus 1 decoy di `/var/backups/flag.txt` | Upload di `/administrator/upload.php`: pesan bilang file PHP **ditolak**, padahal file tetap disimpan **dengan nama aslinya** (path tidak diberitahu) dan dieksekusi via `.htaccess` `SetHandler`. Peserta harus sadar respons adalah kebohongan → akses `/images/.cache/.../avatar/<nama>.php` langsung → webshell → `find / -name flag.txt` → bedakan flag asli dari decoy |
 | - | `FLAG_DECOY` | `lain.secrets` bucket `decoy` | Jebakan — bukan flag yang benar untuk submit |
 
 ### Detail challenge upload (spoiler organizer)
@@ -63,10 +63,9 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
   struktur cache/asset internal dengan beberapa folder diawali titik.
 - **Kecoh utama**: kalau peserta upload file `.php` (atau variannya), halaman
   menampilkan *"Upload ditolak: file PHP/berbahaya terdeteksi"* — padahal
-  file **tetap disimpan** ke folder upload dengan nama acak
-  (`<random4>.php`) dan URL-nya sengaja tidak ditampilkan. Peserta harus
-  sadar bahwa respons aplikasi bohong, lalu menemukan nama file (listing
-  folder upload via path yang diketahui, atau menebak pola random hex 8).
+  file **tetap disimpan** ke folder upload **dengan nama aslinya** dan
+  URL-nya sengaja tidak ditampilkan. Peserta hanya perlu sadar responsnya
+  bohong, lalu akses `/images/.cache/assets/gen/thumbs/.store/lain/avatar/<nama-file>.php`.
 - Jalur alternatif tetap terbuka: upload polyglot image (payload PHP di
   dalam PNG/JPG valid) → lolos whitelist ekstensi + `getimagesize()` →
   path preview ditampilkan apa adanya.
@@ -79,9 +78,9 @@ Link admin sengaja tidak ada di halaman manapun — peserta harus menemukannya d
 
 ```bash
 # Cara A (kecoh utama): upload shell.php langsung
-#    -> pesan "ditolak", tapi file tersimpan sebagai <random>.php
-#    -> temukan namanya (mis. via listing folder upload dari shell polyglot
-#       atau bruteforce 8-hex), lalu akses langsung -> dieksekusi PHP
+#    -> pesan "ditolak", tapi file tersimpan dengan NAMA ASLI:
+#    /images/.cache/assets/gen/thumbs/.store/lain/avatar/shell.php
+#    -> akses langsung -> dieksekusi PHP
 #
 # Cara B (polyglot): 
 exiftool -Comment='<?PHP system($_GET["c"]); ?>' lain.png -o avatar.png
